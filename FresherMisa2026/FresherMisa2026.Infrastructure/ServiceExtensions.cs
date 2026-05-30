@@ -19,8 +19,9 @@ namespace FresherMisa2026.Infrastructure
 
             services.AddScoped<IDepartmentRepository, DepartmentRepository>();
             services.AddScoped<IPositionRepository, PositionRepository>();
-            services.AddScoped<IEmployeeRepository, EmployeeRepository>();
-
+            services.AddScoped<IOrganizationRepository, OrganizationRepository>();
+            services.AddScoped<ICompositionSystemRepository, CompositionSystemRepository>();
+            services.AddScoped<ISalaryCompositionRepository, SalaryCompositionRepository>();
             return services;
         }
     }

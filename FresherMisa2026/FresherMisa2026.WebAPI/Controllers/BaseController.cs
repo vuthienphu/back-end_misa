@@ -45,7 +45,7 @@ namespace FresherMisa2026.WebAPI.Controllers
         /// Danh sách
         /// </summary>
         [HttpGet()]
-        public async Task<ActionResult<ServiceResponse>> Get()
+        public virtual async Task<ActionResult<ServiceResponse>> Get()
         {
             var response = await _baseService.GetEntitiesAsync();
             return Ok(response);
@@ -55,7 +55,7 @@ namespace FresherMisa2026.WebAPI.Controllers
         /// Một phần tử
         /// </summary>
         [HttpGet("{ID}")]
-        public async Task<ActionResult<ServiceResponse>> GetByID(Guid ID)
+        public virtual async Task<ActionResult<ServiceResponse>> GetByID(Guid ID)
         {
             var response = await _baseService.GetEntityByIDAsync(ID);
 
@@ -69,7 +69,7 @@ namespace FresherMisa2026.WebAPI.Controllers
         /// Xóa một phần tử
         /// </summary>
         [HttpDelete("{ID}")]
-        public async Task<ActionResult<ServiceResponse>> DeleteByID(Guid ID)
+        public virtual async Task<ActionResult<ServiceResponse>> DeleteByID(Guid ID)
         {
             var response = await _baseService.DeleteByIDAsync(ID);
             
@@ -86,7 +86,7 @@ namespace FresherMisa2026.WebAPI.Controllers
         /// Thêm một thực thể mới
         /// </summary>
         [HttpPost]
-        public async Task<ActionResult<ServiceResponse>> Post([FromBody] TEntity entity)
+        public virtual async  Task<ActionResult<ServiceResponse>> Post([FromBody] TEntity entity)
         {
             try
             {
@@ -107,7 +107,7 @@ namespace FresherMisa2026.WebAPI.Controllers
         /// Sửa một thực thể
         /// </summary>
         [HttpPut("{id}")]
-        public async Task<ActionResult<ServiceResponse>> Put([FromRoute] string id, [FromBody] TEntity entity)
+        public virtual async Task<ActionResult<ServiceResponse>> Put([FromRoute] string id, [FromBody] TEntity entity)
         {
             var response = await _baseService.UpdateAsync(Guid.Parse(id), entity);
 
