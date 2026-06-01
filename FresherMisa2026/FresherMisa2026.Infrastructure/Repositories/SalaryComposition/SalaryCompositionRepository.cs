@@ -2,7 +2,6 @@
 using FresherMisa2026.Application.Extensions;
 using FresherMisa2026.Application.Interfaces.Repositories;
 using FresherMisa2026.Entities;
-using FresherMisa2026.Entities.Department;
 using FresherMisa2026.Entities.SalaryComposition;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;

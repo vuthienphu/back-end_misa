@@ -1,7 +1,6 @@
 ﻿using Dapper;
 using FresherMisa2026.Application.Interfaces;
 using FresherMisa2026.Entities;
-using FresherMisa2026.Entities.Department;
 using FresherMisa2026.Entities.Extensions;
 using Microsoft.Extensions.Configuration;
 using MySqlConnector;
@@ -18,7 +17,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
     /// Base repository
     /// </summary>
     /// <typeparam name="TEntity"></typeparam>
-    /// Created By: dvhai (09/04/2026)
+    
     public class BaseRepository<TEntity> : IBaseRepository<TEntity>, IDisposable where TEntity : BaseModel
     {
         //Properties
@@ -43,7 +42,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// <summary>
         /// Dispose connection
         /// </summary>
-        /// Created By: dvhai (09/04/2026)
+        
         public void Dispose()
         {
             if (_dbConnection != null && _dbConnection.State == ConnectionState.Open)
@@ -76,7 +75,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// Lấy danh sách entity
         /// </summary>
         /// <returns>Danh sách tất cả bản ghi</returns>
-        /// Created By: dvhai (09/04/2026)
+        
         public async Task<IEnumerable<BaseModel>> GetEntitiesAsync()
         {
             return await GetEntitiesUsingCommandTextAsync();
@@ -86,7 +85,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// Lấy tất cả theo command text
         /// </summary>
         /// <returns></returns>
-        /// CREATED BY: DVHAI (11/07/2021)
+        
         private async Task<IEnumerable<TEntity>> GetEntitiesUsingCommandTextAsync()
         {
             var query = new StringBuilder($"select * from {_tableName}");
@@ -108,7 +107,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// </summary>
         /// <param name="entityId">Id của bản ghi</param>
         /// <returns>Bản ghi tìm thấy hoặc null</returns>
-        /// CREATED BY: DVHAI (07/07/2021)
+       
         public async Task<TEntity> GetEntityByIDAsync(Guid entityId)
         {
             return await GetEntitieByIdUsingCommandTextAsync(entityId.ToString());
@@ -152,7 +151,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// </summary>
         /// <param name="entityId">Id của bản ghi</param>
         /// <returns>Số bản ghi bị xóa</returns>
-        /// CREATED BY: DVHAI (11/07/2021)
+      
         public async Task<int> DeleteAsync(Guid entityId)
         {
             var rowAffects = 0;
@@ -190,7 +189,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// </summary>
         /// <param name="entity">Thông tin bản ghi</param>
         /// <returns>Số bản ghi thêm mới</returns>
-        /// CREATED BY: DVHAI (11/07/2021)
+        
         public async Task<int> InsertAsync(TEntity entity)
         {
             var rowAffects = 0;
@@ -225,7 +224,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// <param name="entityId">Id bản ghi</param>
         /// <param name="entity">Thông tin bản ghi</param>
         /// <returns>Số bản ghi bị ảnh hưởng</returns>
-        /// CREATED BY: DVHAI (11/07/2021)
+        
         public async Task<int> UpdateAsync(Guid entityId, TEntity entity)
         {
             var rowAffects = 0;
@@ -266,7 +265,7 @@ namespace FresherMisa2026.Infrastructure.Repositories
         /// <param name="searchFields">Danh sách trường tìm kiếm</param>
         /// <param name="sort">Sắp xếp theo</param>
         /// <returns>Tổng số bản ghi và danh sách dữ liệu</returns>
-        /// CREATED BY: DVHAI (07/07/2026)
+        
         public async Task<(long Total,
             IEnumerable<TEntity> Data)> GetFilterPagingAsync(
             int pageSize,
@@ -331,6 +330,84 @@ namespace FresherMisa2026.Infrastructure.Repositories
             return parameters;
         }
 
+        public async Task<int> DuplicateAsync(Guid entityId, TEntity entity)
+        {
+            var rowAffects = 0;
+            await OpenConnectionAsync();
+
+            using (var transaction = _dbConnection.BeginTransaction())
+            {
+                try
+                {
+                    //1. Duyệt các thuộc tính trên customer và tạo parameters
+                    var parameters = MappingDbType(entity);
+
+                    //2. Ánh xạ giá trị id
+                    var keyName = _modelType.GetKeyName();
+                    string sourceParamName = $"@v_Source{keyName}";
+
+                    
+                    parameters.Add(sourceParamName, entityId, DbType.String);
+                    //3. Kết nối tới CSDL:
+                    rowAffects = await _dbConnection.ExecuteAsync($"Proc_Duplicate{_tableName}", param: parameters, transaction: transaction, commandType: CommandType.StoredProcedure);
+
+                    transaction.Commit();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+            //4. Trả về dữ liệu
+            return rowAffects;
+        }
+
+        public async Task<int> DeleteMultipleAsync(List<Guid> ids)
+        {
+            if (ids == null || ids.Count == 0) return 0;
+
+            var rowAffects = 0;
+            await OpenConnectionAsync();
+
+            using (var transaction = _dbConnection.BeginTransaction())
+            {
+                try
+                {
+                    // 1. Chuyển List<Guid> thành chuỗi 'uuid1,uuid2,uuid3' (Không có khoảng trắng)
+                    var idsValue = string.Join(",", ids.Select(id => id.ToString()));
+
+                    var dynamicParams = new DynamicParameters();
+
+                    // Quy ước đặt tên tham số trong SP: @v_{TableName}Ids hoặc @v_{ModelName}Ids
+                    // Để khớp với "v_SalaryCompositionIds" của bạn khi Class là "SalaryComposition"
+                    var paramName = $"@v_{_modelType.Name}Ids";
+                    dynamicParams.Add(paramName, idsValue, DbType.String);
+
+                    // Tên SP mặc định theo Base: Proc_DeleteMultiplePa_Salary_Composition
+                    string procName = $"Proc_DeleteMultiple{_tableName}";
+
+                    // 2. Thực thi Stored Procedure
+                    rowAffects = await _dbConnection.ExecuteAsync(
+                        procName,
+                        param: dynamicParams,
+                        transaction: transaction,
+                        commandType: CommandType.StoredProcedure
+                    );
+
+                    transaction.Commit();
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                    // Log error tại đây nếu có Logger
+                    Console.WriteLine($"[BaseRepo - DeleteMultiple] Lỗi: {ex.Message}");
+                    throw;
+                }
+            }
+
+            return rowAffects;
+        }
         #endregion
     }
 }

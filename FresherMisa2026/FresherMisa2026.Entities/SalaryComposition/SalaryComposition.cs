@@ -127,5 +127,22 @@ namespace FresherMisa2026.Entities.SalaryComposition
                     : string.Empty;
             }
         }
+
+
+
+        [NotMapped]
+        public List<string>? SalaryCompositionIdsList { get; set; }
+
+       
+        [NotMapped]
+        public string? SalaryCompositionIds
+        {
+            get
+            {
+                return SalaryCompositionIdsList != null && SalaryCompositionIdsList.Count > 0
+                    ? string.Join(",", SalaryCompositionIdsList )
+                    : string.Empty;
+            }
+        }
     }
 }

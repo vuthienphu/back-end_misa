@@ -12,7 +12,7 @@ namespace FresherMisa2026.Application.Services
     /// Service dùng chung
     /// </summary>
     /// <typeparam name="TEntity">Loại thực thể</typeparam>
-    /// CREATED BY: DVHAI (11/07/2026)
+    
     public class BaseService<TEntity> : IBaseService<TEntity> where TEntity : BaseModel
     {
         #region Declare
@@ -57,7 +57,7 @@ namespace FresherMisa2026.Application.Services
         /// Lấy tất cả bản ghi
         /// </summary>
         /// <returns>Danh sách bản ghi</returns>
-        /// CREATED BY: DVHAI 11/07/2026
+        
         public async Task<ServiceResponse> GetEntitiesAsync()
         {
             var entities = await _baseRepository.GetEntitiesAsync();
@@ -69,7 +69,7 @@ namespace FresherMisa2026.Application.Services
         /// </summary>
         /// <param name="entityId">Id của bản ghi</param>
         /// <returns>Bản ghi duy nhất</returns>
-        /// CREATED BY: DVHAI (11/07/2026)
+        
         public async Task<ServiceResponse> GetEntityByIDAsync(Guid entityId)
         {
             if (entityId == Guid.Empty)
@@ -88,7 +88,7 @@ namespace FresherMisa2026.Application.Services
         /// </summary>
         /// <param name="entityId">Id của bản ghi</param>
         /// <returns>Số dòng bị xóa</returns>
-        /// CREATED BY: DVHAI (07/07/2026)
+        
         public async Task<ServiceResponse> DeleteByIDAsync(Guid entityId)
         {
             if (entityId == Guid.Empty)
@@ -116,12 +116,42 @@ namespace FresherMisa2026.Application.Services
             return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để xóa");
         }
 
+        /// </summary>
+        public async Task<ServiceResponse> DeleteMultipleAsync(List<Guid> ids)
+        {
+            if (ids == null || ids.Count == 0)
+            {
+                return CreateErrorResponse(ResponseCode.BadRequest, "Danh sách Id không được để trống");
+            }
+
+            // Lọc bỏ các ID trống nếu có lỗi từ Client truyền lên
+            var cleanIds = ids.Where(id => id != Guid.Empty).ToList();
+            if (cleanIds.Count == 0)
+            {
+                return CreateErrorResponse(ResponseCode.BadRequest, "Danh sách không chứa Id nào hợp lệ");
+            }
+
+            
+         
+
+            int rowAffects = await _baseRepository.DeleteMultipleAsync(cleanIds);
+
+            if (rowAffects > 0)
+            {
+                // 3. Hook sau khi xóa thành công (Ví dụ: Clear cache, lưu log hành vi...)
+                
+                return CreateSuccessResponse(rowAffects);
+            }
+
+            return CreateErrorResponse(ResponseCode.NotFound, "Không có bản ghi nào được xóa thành công");
+        }
+
         /// <summary>
         /// Validate tất cả
         /// </summary>
         /// <param name="entity">Thực thể</param>
         /// <returns>Danh sách lỗi validate</returns>
-        /// CREATED BY: DVHAI (07/07/2021)
+        
         private List<ValidationError> Validate(TEntity entity)
         {
             var errors = new List<ValidationError>();
@@ -153,7 +183,7 @@ namespace FresherMisa2026.Application.Services
         /// <param name="entity">Thực thể</param>
         /// <param name="propertyInfo">Thuộc tính của thực thể</param>
         /// <returns>Lỗi validate hoặc null nếu hợp lệ</returns>
-        /// CREATED BY: DVHAI (07/07/2021)
+        
         private ValidationError? ValidateRequired(TEntity entity, PropertyInfo propertyInfo)
         {
             //1. Tên trường
@@ -178,7 +208,7 @@ namespace FresherMisa2026.Application.Services
         /// </summary>
         /// <param name="entity">Thực thể</param>
         /// <returns>Danh sách lỗi tùy chỉnh</returns>
-        /// CREATED BY: DVHAI (07/07/2021)
+        
         protected virtual List<ValidationError> ValidateCustom(TEntity entity)
         {
             return new List<ValidationError>();
@@ -190,7 +220,7 @@ namespace FresherMisa2026.Application.Services
         /// </summary>
         /// <param name="entity">Thực thể cần thêm</param>
         /// <returns>ServiceResponse chứa kết quả</returns>
-        /// CREATED BY: DVHAI (11/07/2021)
+        
         public async Task<ServiceResponse> InsertAsync(TEntity entity)
         {
             entity.State = ModelSate.Add;
@@ -218,7 +248,7 @@ namespace FresherMisa2026.Application.Services
         /// <param name="entityId">Id bản ghi</param>
         /// <param name="entity">Thông tin bản ghi</param>
         /// <returns>ServiceResponse chứa kết quả</returns>
-        /// CREATED BY: DVHAI (11/07/2021)
+        
         public async Task<ServiceResponse> UpdateAsync(Guid entityId, TEntity entity)
         {
             if (entityId == Guid.Empty)
@@ -250,12 +280,46 @@ namespace FresherMisa2026.Application.Services
             );
         }
 
+
+        public async Task<ServiceResponse> DuplicateAsync(Guid entityId, TEntity entity)
+        {
+            if (entityId == Guid.Empty)
+            {
+                return CreateErrorResponse(ResponseCode.BadRequest, "Id không hợp lệ");
+            }
+
+           
+
+            //2. Validate tất cả các trường nếu được gắn thẻ
+            var errors = Validate(entity);
+
+            if (errors.Count == 0)
+            {
+                int rowAffects = await _baseRepository.DuplicateAsync(entityId, entity);
+                if (rowAffects > 0)
+                {
+                    return CreateSuccessResponse(rowAffects);
+                }
+                return CreateErrorResponse(ResponseCode.NotFound, "Không tìm thấy bản ghi để cập nhật");
+            }
+
+            //3. Validate fail - trả về BadRequest
+            return CreateErrorResponse(
+                ResponseCode.BadRequest,
+                "Validate thất bại",
+                string.Join("; ", errors.Select(e => e.Message))
+            );
+        }
+
+
+      
+
         /// <summary>
         /// Lấy danh sách thực thể paging
         /// </summary>
         /// <param name="pagingRequest">Thông tin phân trang</param>
         /// <returns>Danh sách thực thể phân trang</returns>
-        /// CREATED BY: DVHAI (07/07/2026)
+       
         public async Task<ServiceResponse> GetFilterPagingAsync(PagingRequest pagingRequest)
         {
             var fields = string.IsNullOrEmpty(pagingRequest.SearchFields)
@@ -278,6 +342,8 @@ namespace FresherMisa2026.Application.Services
 
             return CreateSuccessResponse(response);
         }
+
+       
         #endregion
 
         #region Virtual method - Lifecycle hooks
@@ -382,6 +448,8 @@ namespace FresherMisa2026.Application.Services
         {
             return Task.FromResult(true);
         }
+
+       
         #endregion
     }
 

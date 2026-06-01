@@ -8,6 +8,7 @@ namespace FresherMisa2026.Entities
     {
         Add = 1,
         Update = 2,
-        Delete = 3
+        Delete = 3,
+        Duplicate = 4
     }
 }

@@ -82,6 +82,34 @@ namespace FresherMisa2026.WebAPI.Controllers
             return Ok(response);
         }
 
+
+        [HttpDelete("delete-multiple")]
+        public virtual async Task<ActionResult<ServiceResponse>> DeleteMultiple([FromBody] List<Guid> ids)
+        {
+            try
+            {
+                // Gọi xuống Service xử lý gộp
+                var response = await _baseService.DeleteMultipleAsync(ids);
+
+                if (!response.IsSuccess)
+                {
+                    if (response.Code == (int)ResponseCode.NotFound)
+                        return NotFound(response);
+
+                    if (response.Code == (int)ResponseCode.BadRequest)
+                        return BadRequest(response);
+                }
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                // Đồng bộ bọc try-catch lỗi hệ thống giống hàm Post
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+
         /// <summary>
         /// Thêm một thực thể mới
         /// </summary>
@@ -110,6 +138,24 @@ namespace FresherMisa2026.WebAPI.Controllers
         public virtual async Task<ActionResult<ServiceResponse>> Put([FromRoute] string id, [FromBody] TEntity entity)
         {
             var response = await _baseService.UpdateAsync(Guid.Parse(id), entity);
+
+            if (!response.IsSuccess)
+            {
+                if (response.Code == (int)ResponseCode.NotFound)
+                    return NotFound(response);
+                return BadRequest(response);
+            }
+
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Nhân bản một thực thể
+        /// </summary>
+        [HttpPost("duplicate/{id}")]
+        public virtual async Task<ActionResult<ServiceResponse>> Duplicate([FromRoute] string id, [FromBody] TEntity entity)
+        {
+            var response = await _baseService.DuplicateAsync(Guid.Parse(id), entity);
 
             if (!response.IsSuccess)
             {

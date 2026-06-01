@@ -10,7 +10,7 @@ namespace FresherMisa2026.Application.Interfaces.Services
         /// Lấy tất cả bản ghi
         /// </summary>
         /// <returns>Danh sách bản ghi</returns>
-        /// CREATED BY: DVHAI 11/07/2026
+       
         Task<ServiceResponse> GetEntitiesAsync();
 
         /// <summary>
@@ -18,7 +18,7 @@ namespace FresherMisa2026.Application.Interfaces.Services
         /// </summary>
         /// <param name="entityId">Id của bản ghi</param>
         /// <returns>Bản ghi thông tin 1 bản ghi</returns>
-        /// CREATED BY: DVHAI (07/07/2026)
+        
         Task<ServiceResponse> GetEntityByIDAsync(Guid entityId);
 
         /// <summary>
@@ -26,7 +26,7 @@ namespace FresherMisa2026.Application.Interfaces.Services
         /// </summary>
         /// <param name="entityId">Id bản ghi</param>
         /// <returns>ServiceResponse</returns>
-        /// CREATED BY: DVHAI (07/07/2026)
+        
         Task<ServiceResponse> DeleteByIDAsync(Guid entityId);
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace FresherMisa2026.Application.Interfaces.Services
         /// </summary>
         /// <param name="entity">Thực thể cần thêm</param>
         /// <returns>ServiceResponse</returns>
-        /// CREATED BY: DVHAI (11/07/2026)
+        
         Task<ServiceResponse> InsertAsync(TEntity entity);
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace FresherMisa2026.Application.Interfaces.Services
         /// <param name="entityId">Id bản ghi</param>
         /// <param name="entity">Thông tin bản ghi</param>
         /// <returns>ServiceResponse</returns>
-        /// CREATED BY: DVHAI (11/07/2021)
+       
         Task<ServiceResponse> UpdateAsync(Guid entityId, TEntity entity);
 
         /// <summary>
@@ -51,7 +51,11 @@ namespace FresherMisa2026.Application.Interfaces.Services
         /// </summary>
         /// <param name="pagingRequest">Thông tin phân trang</param>
         /// <returns>Danh sách thực thể phân trang</returns>
-        /// CREATED BY: DVHAI (07/07/2026)
+       
         Task<ServiceResponse> GetFilterPagingAsync(PagingRequest pagingRequest);
+
+        Task<ServiceResponse> DuplicateAsync(Guid entityId, TEntity entity);
+
+        Task<ServiceResponse> DeleteMultipleAsync(List<Guid> ids);
     }
 }
